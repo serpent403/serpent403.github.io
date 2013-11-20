@@ -4,7 +4,7 @@
   <title><![CDATA[serpent403]]></title>
   <link href="http://serpent403.github.io/atom.xml" rel="self"/>
   <link href="http://serpent403.github.io/"/>
-  <updated>2013-11-21T00:12:35+05:30</updated>
+  <updated>2013-11-21T01:41:22+05:30</updated>
   <id>http://serpent403.github.io/</id>
   <author>
     <name><![CDATA[Aman Singh]]></name>
@@ -12,6 +12,227 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[MongoDB Map Reduce]]></title>
+    <link href="http://serpent403.github.io/blog/2013/11/21/map-reduce-with-mongodb/"/>
+    <updated>2013-11-21T00:32:49+05:30</updated>
+    <id>http://serpent403.github.io/blog/2013/11/21/map-reduce-with-mongodb</id>
+    <content type="html"><![CDATA[<p>Few examples on how to use map reduce with mongodb.</p>
+
+<figure class='code'><figcaption><span> (map_reduce_1.js)</span> <a href='http://serpent403.github.io/downloads/code/map_reduce_1.js'>download</a></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="c1">// Execute the below in the &quot;mongo&quot; shell</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Selecting the database</span>
+</span><span class='line'><span class="nx">use</span> <span class="nx">tutorial</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Input data</span>
+</span><span class='line'><span class="nx">db</span><span class="p">.</span><span class="nx">orders</span><span class="p">.</span><span class="nx">insert</span><span class="p">({</span> <span class="nx">cust_id</span><span class="o">:</span> <span class="s2">&quot;A123&quot;</span><span class="p">,</span> <span class="nx">amount</span><span class="o">:</span> <span class="mi">500</span><span class="p">,</span> <span class="nx">status</span><span class="o">:</span> <span class="s2">&quot;A&quot;</span> <span class="p">})</span>
+</span><span class='line'><span class="nx">db</span><span class="p">.</span><span class="nx">orders</span><span class="p">.</span><span class="nx">insert</span><span class="p">({</span> <span class="nx">cust_id</span><span class="o">:</span> <span class="s2">&quot;A123&quot;</span><span class="p">,</span> <span class="nx">amount</span><span class="o">:</span> <span class="mi">250</span><span class="p">,</span> <span class="nx">status</span><span class="o">:</span> <span class="s2">&quot;A&quot;</span> <span class="p">})</span>
+</span><span class='line'><span class="nx">db</span><span class="p">.</span><span class="nx">orders</span><span class="p">.</span><span class="nx">insert</span><span class="p">({</span> <span class="nx">cust_id</span><span class="o">:</span> <span class="s2">&quot;B212&quot;</span><span class="p">,</span> <span class="nx">amount</span><span class="o">:</span> <span class="mi">200</span><span class="p">,</span> <span class="nx">status</span><span class="o">:</span> <span class="s2">&quot;A&quot;</span> <span class="p">})</span>
+</span><span class='line'><span class="nx">db</span><span class="p">.</span><span class="nx">orders</span><span class="p">.</span><span class="nx">insert</span><span class="p">({</span> <span class="nx">cust_id</span><span class="o">:</span> <span class="s2">&quot;A123&quot;</span><span class="p">,</span> <span class="nx">amount</span><span class="o">:</span> <span class="mi">300</span><span class="p">,</span> <span class="nx">status</span><span class="o">:</span> <span class="s2">&quot;D&quot;</span> <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/*</span>
+</span><span class='line'><span class="cm">* Task:</span>
+</span><span class='line'><span class="cm">* Calculate the sum of all “amount”s for every “cust_id”</span>
+</span><span class='line'><span class="cm">*/</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// map function</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">map</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nx">emit</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">cust_id</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">amount</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// reduce function</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">reduce</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">keyCustId</span><span class="p">,</span> <span class="nx">values</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="nb">Array</span><span class="p">.</span><span class="nx">sum</span><span class="p">(</span><span class="nx">values</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// options for the map reduce query</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">options</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nx">query</span><span class="o">:</span> <span class="p">{</span> <span class="nx">status</span><span class="o">:</span> <span class="s2">&quot;A&quot;</span> <span class="p">},</span>
+</span><span class='line'>  <span class="nx">out</span><span class="o">:</span> <span class="s2">&quot;order_totals&quot;</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">db</span><span class="p">.</span><span class="nx">orders</span><span class="p">.</span><span class="nx">mapReduce</span><span class="p">(</span><span class="nx">map</span><span class="p">,</span> <span class="nx">reduce</span><span class="p">,</span> <span class="nx">options</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/*</span>
+</span><span class='line'><span class="cm">* Output:</span>
+</span><span class='line'><span class="cm">* &gt; db.order_totals.find()</span>
+</span><span class='line'><span class="cm">* { &quot;_id&quot; : &quot;A123&quot;, &quot;value&quot; : 750 }</span>
+</span><span class='line'><span class="cm">* { &quot;_id&quot; : &quot;B212&quot;, &quot;value&quot; : 200 }</span>
+</span><span class='line'><span class="cm">*/</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<figure class='code'><figcaption><span> (map_reduce_2.js)</span> <a href='http://serpent403.github.io/downloads/code/map_reduce_2.js'>download</a></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="c1">// Execute the below in the &quot;mongo&quot; shell</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Selecting the database</span>
+</span><span class='line'><span class="nx">use</span> <span class="nx">tutorial</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Input data</span>
+</span><span class='line'><span class="nx">db</span><span class="p">.</span><span class="nx">carts</span><span class="p">.</span><span class="nx">insert</span><span class="p">({</span> <span class="nx">cust_id</span><span class="o">:</span> <span class="s2">&quot;A123&quot;</span><span class="p">,</span> <span class="nx">amount</span><span class="o">:</span> <span class="mi">25</span><span class="p">,</span> <span class="nx">status</span><span class="o">:</span> <span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="nx">items</span><span class="o">:</span> <span class="p">[</span> <span class="p">{</span> <span class="nx">sku</span><span class="o">:</span> <span class="s2">&quot;mmm&quot;</span><span class="p">,</span> <span class="nx">qty</span><span class="o">:</span> <span class="mi">5</span><span class="p">,</span> <span class="nx">price</span><span class="o">:</span> <span class="mf">2.5</span> <span class="p">},</span> <span class="p">{</span> <span class="nx">sku</span><span class="o">:</span> <span class="s2">&quot;nnn&quot;</span><span class="p">,</span> <span class="nx">qty</span><span class="o">:</span> <span class="mi">5</span><span class="p">,</span> <span class="nx">price</span><span class="o">:</span> <span class="mf">2.5</span> <span class="p">}</span> <span class="p">]</span> <span class="p">})</span>
+</span><span class='line'><span class="nx">db</span><span class="p">.</span><span class="nx">carts</span><span class="p">.</span><span class="nx">insert</span><span class="p">({</span> <span class="nx">cust_id</span><span class="o">:</span> <span class="s2">&quot;A123&quot;</span><span class="p">,</span> <span class="nx">amount</span><span class="o">:</span> <span class="mi">50</span><span class="p">,</span> <span class="nx">status</span><span class="o">:</span> <span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="nx">items</span><span class="o">:</span> <span class="p">[</span> <span class="p">{</span> <span class="nx">sku</span><span class="o">:</span> <span class="s2">&quot;mmm&quot;</span><span class="p">,</span> <span class="nx">qty</span><span class="o">:</span> <span class="mi">10</span><span class="p">,</span> <span class="nx">price</span><span class="o">:</span> <span class="mi">5</span> <span class="p">}</span> <span class="p">]</span> <span class="p">})</span>
+</span><span class='line'><span class="nx">db</span><span class="p">.</span><span class="nx">carts</span><span class="p">.</span><span class="nx">insert</span><span class="p">({</span> <span class="nx">cust_id</span><span class="o">:</span> <span class="s2">&quot;B212&quot;</span><span class="p">,</span> <span class="nx">amount</span><span class="o">:</span> <span class="mi">30</span><span class="p">,</span> <span class="nx">status</span><span class="o">:</span> <span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="nx">items</span><span class="o">:</span> <span class="p">[</span> <span class="p">{</span> <span class="nx">sku</span><span class="o">:</span> <span class="s2">&quot;nnn&quot;</span><span class="p">,</span> <span class="nx">qty</span><span class="o">:</span> <span class="mi">2</span><span class="p">,</span> <span class="nx">price</span><span class="o">:</span> <span class="mi">5</span> <span class="p">},</span> <span class="p">{</span> <span class="nx">sku</span><span class="o">:</span> <span class="s2">&quot;kkk&quot;</span><span class="p">,</span> <span class="nx">qty</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">price</span><span class="o">:</span> <span class="mi">20</span> <span class="p">}</span> <span class="p">]</span> <span class="p">})</span>
+</span><span class='line'><span class="nx">db</span><span class="p">.</span><span class="nx">carts</span><span class="p">.</span><span class="nx">insert</span><span class="p">({</span> <span class="nx">cust_id</span><span class="o">:</span> <span class="s2">&quot;A123&quot;</span><span class="p">,</span> <span class="nx">amount</span><span class="o">:</span> <span class="mi">90</span><span class="p">,</span> <span class="nx">status</span><span class="o">:</span> <span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="nx">items</span><span class="o">:</span> <span class="p">[</span> <span class="p">{</span> <span class="nx">sku</span><span class="o">:</span> <span class="s2">&quot;mmm&quot;</span><span class="p">,</span> <span class="nx">qty</span><span class="o">:</span> <span class="mi">10</span><span class="p">,</span> <span class="nx">price</span><span class="o">:</span> <span class="mi">6</span> <span class="p">},</span> <span class="p">{</span> <span class="nx">sku</span><span class="o">:</span> <span class="s2">&quot;kkk&quot;</span><span class="p">,</span> <span class="nx">qty</span><span class="o">:</span> <span class="mi">3</span><span class="p">,</span> <span class="nx">price</span><span class="o">:</span> <span class="mi">10</span> <span class="p">}</span> <span class="p">]</span> <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/*</span>
+</span><span class='line'><span class="cm">* Task:</span>
+</span><span class='line'><span class="cm">* Calculate the total count, total quantity and average quantity for every “sku”</span>
+</span><span class='line'><span class="cm">*/</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// map function</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">map</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">idx</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">idx</span> <span class="o">&lt;</span> <span class="k">this</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">idx</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">key</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">idx</span><span class="p">].</span><span class="nx">sku</span><span class="p">;</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">value</span> <span class="o">=</span> <span class="p">{</span> <span class="nx">count</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">qty</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">idx</span><span class="p">].</span><span class="nx">qty</span> <span class="p">};</span>
+</span><span class='line'>    <span class="nx">emit</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">value</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// reduce function</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">reduce</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">keySku</span><span class="p">,</span> <span class="nx">values</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nx">reducedVal</span> <span class="o">=</span> <span class="p">{</span> <span class="nx">count</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">qty</span><span class="o">:</span> <span class="mi">0</span> <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">idx</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">idx</span> <span class="o">&lt;</span> <span class="nx">values</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">idx</span><span class="o">++</span><span class="p">){</span>
+</span><span class='line'>    <span class="nx">reducedVal</span><span class="p">.</span><span class="nx">count</span> <span class="o">+=</span> <span class="nx">values</span><span class="p">[</span><span class="nx">idx</span><span class="p">].</span><span class="nx">count</span><span class="p">;</span>
+</span><span class='line'>    <span class="nx">reducedVal</span><span class="p">.</span><span class="nx">qty</span> <span class="o">+=</span> <span class="nx">values</span><span class="p">[</span><span class="nx">idx</span><span class="p">].</span><span class="nx">qty</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">return</span> <span class="nx">reducedVal</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// finalize function</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">finalize</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">keySku</span><span class="p">,</span> <span class="nx">reducedVal</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nx">reducedVal</span><span class="p">.</span><span class="nx">avg</span> <span class="o">=</span> <span class="nx">reducedVal</span><span class="p">.</span><span class="nx">qty</span> <span class="o">/</span> <span class="nx">reducedVal</span><span class="p">.</span><span class="nx">count</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">return</span> <span class="nx">reducedVal</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// options for the map reduce query</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">options</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nx">out</span><span class="o">:</span> <span class="p">{</span> <span class="nx">merge</span><span class="o">:</span> <span class="s2">&quot;cart_sku_results&quot;</span> <span class="p">},</span>
+</span><span class='line'>  <span class="nx">finalize</span><span class="o">:</span> <span class="nx">finalize</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">db</span><span class="p">.</span><span class="nx">carts</span><span class="p">.</span><span class="nx">mapReduce</span><span class="p">(</span><span class="nx">map</span><span class="p">,</span> <span class="nx">reduce</span><span class="p">,</span> <span class="nx">options</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/*</span>
+</span><span class='line'><span class="cm">* Output:</span>
+</span><span class='line'><span class="cm">* { &quot;_id&quot; : &quot;kkk&quot;, &quot;value&quot; : { &quot;count&quot; : 2, &quot;qty&quot; : 4, &quot;avg&quot; : 2 } }</span>
+</span><span class='line'><span class="cm">* { &quot;_id&quot; : &quot;mmm&quot;, &quot;value&quot; : { &quot;count&quot; : 3, &quot;qty&quot; : 25, &quot;avg&quot; : 8.333333333333334 } }</span>
+</span><span class='line'><span class="cm">* { &quot;_id&quot; : &quot;nnn&quot;, &quot;value&quot; : { &quot;count&quot; : 2, &quot;qty&quot; : 7, &quot;avg&quot; : 3.5 } }</span>
+</span><span class='line'><span class="cm">*/</span>
+</span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Maiden Post]]></title>
